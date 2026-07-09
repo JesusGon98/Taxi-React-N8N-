@@ -1,0 +1,9 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# n8n local runtime data (docker named volume, not a bind mount, nothing to ignore here)
