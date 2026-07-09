@@ -7,4 +7,4 @@
 // Cómo obtener tu IP local:
 //   Windows (PowerShell): ipconfig  -> busca "Dirección IPv4"
 //   Mac/Linux: ifconfig o `ipconfig getifaddr en0`
-export const N8N_WEBHOOK_URL = 'http://192.168.1.XX:5678/webhook/taxi-request';
+export const N8N_WEBHOOK_URL = 'http://192.168.68.100:5678/webhook/taxi-request';
