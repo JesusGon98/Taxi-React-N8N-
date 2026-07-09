@@ -18,12 +18,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.openai.com/v1/chat/completions",
+        "url": "https://api.deepseek.com/chat/completions",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o-mini\", response_format: { type: \"json_object\" }, messages: [ { role: \"system\", content: \"Eres un asistente que extrae el origen y destino de una solicitud de taxi en lenguaje natural. Responde UNICAMENTE con un JSON valido con este formato exacto: {\\\"origin\\\": \\\"<zona>\\\", \\\"destination\\\": \\\"<zona>\\\"}. Las zonas validas son: Centro, Zona Rio, Otay, Otay Centenario, Playas de Tijuana, La Mesa, Sanchez Taboada, La Presa. Elige la zona valida mas parecida al texto del usuario para origin y para destination. No incluyas texto adicional, explicaciones ni markdown.\" }, { role: \"user\", content: $json.body.prompt } ] }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: \"deepseek-chat\", response_format: { type: \"json_object\" }, messages: [ { role: \"system\", content: \"Eres un asistente que extrae el origen y destino de una solicitud de taxi en lenguaje natural. Responde UNICAMENTE con un JSON valido con este formato exacto: {\\\"origin\\\": \\\"<zona>\\\", \\\"destination\\\": \\\"<zona>\\\"}. Las zonas validas son: Centro, Zona Rio, Otay, Otay Centenario, Playas de Tijuana, La Mesa, Sanchez Taboada, La Presa. Elige la zona valida mas parecida al texto del usuario para origin y para destination. No incluyas texto adicional, explicaciones ni markdown.\" }, { role: \"user\", content: $json.body.prompt } ] }) }}",
         "options": {}
       },
       "id": "ai-parser-002",
@@ -31,7 +31,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [460, 300],
-      "notes": "Llama a un LLM para extraer origen/destino del prompt en lenguaje natural. Por defecto usa la API de OpenAI (chat/completions) - crea una credencial 'Header Auth' con Name=Authorization y Value=Bearer TU_API_KEY. Para usar Gemini o Claude, cambia la URL, el header de auth y el body segun la documentacion de ese proveedor."
+      "notes": "Llama a la API de DeepSeek (compatible con el formato OpenAI) para extraer origen/destino del prompt en lenguaje natural. Crea una credencial 'Header Auth' con Name=Authorization y Value=Bearer TU_DEEPSEEK_API_KEY (nunca la subas al repo)."
     },
     {
       "parameters": {

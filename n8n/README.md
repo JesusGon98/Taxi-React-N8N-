@@ -30,22 +30,27 @@ owner (usuario/contraseña) la primera vez que entres.
 
 ## 3. Configurar la credencial del LLM
 
-El nodo **IA - Agente Parser** viene configurado por defecto para llamar a
-la API de OpenAI (`https://api.openai.com/v1/chat/completions`). Puedes
-usar el LLM que prefieras (OpenAI, Gemini, Claude, etc.) — solo ajusta este
-nodo:
+El nodo **IA - Agente Parser** está configurado para llamar a la API de
+**DeepSeek** (`https://api.deepseek.com/chat/completions`, formato
+compatible con OpenAI, modelo `deepseek-chat`).
 
-- **Si usas OpenAI:** abre el nodo → Authentication → crea una credencial
-  "Header Auth" nueva con:
-  - Name: `Authorization`
-  - Value: `Bearer TU_API_KEY`
-- **Si prefieres otro proveedor** (Gemini, Claude, Ollama, etc.): cambia la
-  URL, el header de autenticación y el `jsonBody` del nodo según la
-  documentación de esa API. La lógica del resto del flujo no cambia,
-  porque el nodo "Buscador de Conductores" ya sabe leer el texto de
-  respuesta del modelo desde `choices[0].message.content` (formato
-  estándar tipo OpenAI) o desde `content` directamente si tu proveedor
-  responde distinto.
+1. Abre el nodo **IA - Agente Parser** → **Authentication** → crea una
+   credencial nueva tipo **Header Auth** con:
+   - Name: `Authorization`
+   - Value: `Bearer TU_DEEPSEEK_API_KEY`
+2. Guarda y selecciona esa credencial en el nodo.
+
+**Nunca pongas tu API key directamente en el JSON del flujo ni en ningún
+archivo del repo** — ese repo va a ser público. La credencial vive
+únicamente dentro de la base de datos interna de n8n (el volumen Docker
+`n8n_data`), no se exporta al hacer `Import/Export from File`.
+
+Si prefieres otro proveedor (OpenAI, Gemini, Claude, Ollama, etc.), cambia
+la URL, el header de autenticación y el `jsonBody` del nodo según la
+documentación de esa API. La lógica del resto del flujo no cambia, porque
+el nodo "Buscador de Conductores" ya sabe leer el texto de respuesta del
+modelo desde `choices[0].message.content` (formato estándar tipo OpenAI) o
+desde `content` directamente si tu proveedor responde distinto.
 
 ## 4. Activar el flujo y probar
 
