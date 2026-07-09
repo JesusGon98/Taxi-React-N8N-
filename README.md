@@ -1,8 +1,5 @@
 # Taxi AI — Integración n8n + React Native (Expo)
 
-> 🔗 **Repositorio:** reemplaza esta línea con el link clickable a tu repo
-> de GitHub (debe ir también al inicio del PDF de entrega).
-> Ejemplo: https://github.com/tu-usuario/taxi-ai-n8n
 
 Actividad práctica que conecta una app móvil (React Native / Expo) con un
 flujo de automatización local en n8n que usa un LLM para interpretar una
