@@ -54,7 +54,11 @@ desde `content` directamente si tu proveedor responde distinto.
 
 ## 4. Activar el flujo y probar
 
-1. Activa el flujo con el switch **Active** (arriba a la derecha).
+1. Activa el flujo. Según tu versión de n8n verás uno de estos dos:
+   - Versiones clásicas: switch **Active** arriba a la derecha del editor.
+   - Versiones nuevas (n8n 2.x): botón **Publish** arriba a la derecha
+     (junto al ícono de reloj). Dale clic — sin publicar, el webhook no
+     queda registrado y verás el error `"webhook ... is not registered"`.
 2. Prueba con `curl` o Postman:
 
 ```bash
