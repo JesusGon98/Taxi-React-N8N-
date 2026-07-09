@@ -10,4 +10,4 @@
 // evita tocar el firewall de Windows. La URL cambia cada vez que reinicias
 // el comando `npx localtunnel --port 5678` — si deja de responder, corre
 // ese comando de nuevo y actualiza esta línea con la nueva URL impresa.
-export const N8N_WEBHOOK_URL = 'https://fast-symbols-behave.loca.lt/webhook/taxi-request';
+export const N8N_WEBHOOK_URL = 'https://sad-zebras-joke.loca.lt/webhook/taxi-request';
