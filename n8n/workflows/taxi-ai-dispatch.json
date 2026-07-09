@@ -1,0 +1,100 @@
+{
+  "name": "Taxi AI Dispatch",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "taxi-request",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger-001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "taxi-request-webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o-mini\", response_format: { type: \"json_object\" }, messages: [ { role: \"system\", content: \"Eres un asistente que extrae el origen y destino de una solicitud de taxi en lenguaje natural. Responde UNICAMENTE con un JSON valido con este formato exacto: {\\\"origin\\\": \\\"<zona>\\\", \\\"destination\\\": \\\"<zona>\\\"}. Las zonas validas son: Centro, Zona Rio, Otay, Otay Centenario, Playas de Tijuana, La Mesa, Sanchez Taboada, La Presa. Elige la zona valida mas parecida al texto del usuario para origin y para destination. No incluyas texto adicional, explicaciones ni markdown.\" }, { role: \"user\", content: $json.body.prompt } ] }) }}",
+        "options": {}
+      },
+      "id": "ai-parser-002",
+      "name": "IA - Agente Parser",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "notes": "Llama a un LLM para extraer origen/destino del prompt en lenguaje natural. Por defecto usa la API de OpenAI (chat/completions) - crea una credencial 'Header Auth' con Name=Authorization y Value=Bearer TU_API_KEY. Para usar Gemini o Claude, cambia la URL, el header de auth y el body segun la documentacion de ese proveedor."
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResponse = $input.first().json;\n\nlet content = '';\nif (aiResponse.choices && aiResponse.choices[0] && aiResponse.choices[0].message) {\n  content = aiResponse.choices[0].message.content;\n} else if (typeof aiResponse.content === 'string') {\n  content = aiResponse.content;\n} else {\n  content = JSON.stringify(aiResponse);\n}\n\nlet parsed;\ntry {\n  const jsonMatch = content.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(jsonMatch ? jsonMatch[0] : content);\n} catch (e) {\n  parsed = { origin: 'Centro', destination: 'Centro' };\n}\n\nconst origin = (parsed.origin || 'Centro').trim();\nconst destination = (parsed.destination || 'Centro').trim();\n\n// Coordenadas aproximadas de zonas de Tijuana (mock)\nconst ZONES = {\n  'centro': { lat: 32.5283, lon: -117.0187 },\n  'zona rio': { lat: 32.5228, lon: -117.0198 },\n  'otay': { lat: 32.5297, lon: -116.9664 },\n  'otay centenario': { lat: 32.5389, lon: -116.9483 },\n  'playas de tijuana': { lat: 32.5259, lon: -117.1219 },\n  'la mesa': { lat: 32.5074, lon: -116.9850 },\n  'sanchez taboada': { lat: 32.4979, lon: -117.0006 },\n  'la presa': { lat: 32.4796, lon: -116.9394 },\n};\n\nfunction normalize(str) {\n  return str.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').trim();\n}\n\nfunction findZoneCoords(name) {\n  const key = normalize(name);\n  if (ZONES[key]) return ZONES[key];\n  const match = Object.keys(ZONES).find((z) => key.includes(z) || z.includes(key));\n  return match ? ZONES[match] : ZONES['centro'];\n}\n\nconst originCoords = findZoneCoords(origin);\n\n// Base de datos mock de conductores disponibles\nconst DRIVERS = [\n  { name: 'Carlos Ramirez', car: 'Nissan Versa Blanco', plate: 'BCN-1234', lat: 32.5300, lon: -117.0150 },\n  { name: 'Mariana Lopez', car: 'Toyota Corolla Gris', plate: 'BCN-5566', lat: 32.5100, lon: -116.9800 },\n  { name: 'Jorge Hernandez', car: 'Chevrolet Aveo Rojo', plate: 'BCN-7788', lat: 32.5350, lon: -116.9500 },\n  { name: 'Ana Torres', car: 'Kia Rio Azul', plate: 'BCN-9910', lat: 32.5250, lon: -117.1150 },\n  { name: 'Luis Dominguez', car: 'Honda City Negro', plate: 'BCN-3321', lat: 32.4950, lon: -117.0050 },\n  { name: 'Paola Vega', car: 'Hyundai Accent Plata', plate: 'BCN-4432', lat: 32.4800, lon: -116.9400 },\n];\n\nfunction haversineKm(lat1, lon1, lat2, lon2) {\n  const R = 6371;\n  const dLat = ((lat2 - lat1) * Math.PI) / 180;\n  const dLon = ((lon2 - lon1) * Math.PI) / 180;\n  const a =\n    Math.sin(dLat / 2) ** 2 +\n    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;\n  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));\n  return R * c;\n}\n\nlet nearest = null;\nlet nearestDistance = Infinity;\n\nfor (const driver of DRIVERS) {\n  const d = haversineKm(originCoords.lat, originCoords.lon, driver.lat, driver.lon);\n  if (d < nearestDistance) {\n    nearestDistance = d;\n    nearest = driver;\n  }\n}\n\nconst AVG_SPEED_KMH = 35;\nconst etaMinutes = Math.max(1, Math.round((nearestDistance / AVG_SPEED_KMH) * 60));\n\nreturn [\n  {\n    json: {\n      origin,\n      destination,\n      driver: {\n        name: nearest.name,\n        car: nearest.car,\n        plate: nearest.plate,\n      },\n      distanceKm: Math.round(nearestDistance * 10) / 10,\n      etaMinutes,\n    },\n  },\n];"
+      },
+      "id": "driver-matcher-003",
+      "name": "Buscador de Conductores",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "notes": "Parsea el JSON devuelto por la IA, calcula la distancia (formula haversine) desde el origen hacia cada conductor de la base mock y selecciona al mas cercano."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond-webhook-004",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "IA - Agente Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IA - Agente Parser": {
+      "main": [
+        [
+          {
+            "node": "Buscador de Conductores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscador de Conductores": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
